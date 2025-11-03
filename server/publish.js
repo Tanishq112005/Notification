@@ -1,0 +1,5 @@
+class Publish   {
+   constructor() {
+
+   }
+}
