@@ -184,35 +184,43 @@ export class Queue {
         }
     }
 
-
-    async sendingMessage(nameOfChannel , nameOfExchange ,key = "" ,  message){
+   // for sending the message 
+    async sendingMessage(nameOfChannel, nameOfExchange, key = "", message) {
         try {
-        if(!this.channel_list.has(nameOfChannel)){
-            throw new Error(`No such type of channel is there first , create it`) 
+          if (!this.channel_list.has(nameOfChannel)) {
+            throw new Error(`Channel "${nameOfChannel}" does not exist. Create it first.`);
+          }
+      
+          const channel = this.channel_list.get(nameOfChannel);
+      
+          if (!this.exchange_list.has(nameOfExchange)) {
+            throw new Error(`Exchange "${nameOfExchange}" does not exist. Create it first.`);
+          }
+      
+          const exchangeType = this.exchange_list.get(nameOfExchange).toLowerCase();
+      
+          if (exchangeType === "direct" && key === "") {
+            throw new Error(`Routing key is required for direct exchange.`);
+          }
+      
+          const sent = channel.publish(
+            nameOfExchange,
+            key,
+            Buffer.from(JSON.stringify(message)),  
+            { persistent: true }                   
+          );
+      
+          if (sent) {
+            console.log(`✅ Message sent to exchange "${nameOfExchange}" (key: "${key || '(none)'}")`);
+          } else {
+            console.warn(`⚠️ Message could not be sent (buffer full).`);
+          }
+        } catch (err) {
+          console.error(`❌ Error in sending message: ${err.message}`);
+          throw err;
         }
-        
-        const channel = this.channel_list.get(nameOfChannel) ; 
-        if(!this.exchange_list.has(nameOfExchange)){
-            throw new Error(`No such type of the exchange in the exchange list , first create it`) ; 
-        }
+      }
+    
 
-        // after checking binding up the exchange with the main publish queue 
-        const exchangeType = this.exchange_list.get(nameOfExchange) ; 
-        
-        if(exchangeType === "Direct"){
-          if(key == ""){
-            throw new Error("First create a key for this exchange") ; 
-          }
-          else {
-            await channel.pusblish(nameOfExchange , key , Buffer.msg(message)) ;
-          }
-        }
-        else {
-            await channel.pusblish(nameOfExchange , key , Buffer.msg(message));
-        }
-    }
-    catch(err){
-        throw new Error(err) ; 
-    }
-}
+      
 }
